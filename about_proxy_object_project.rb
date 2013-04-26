@@ -14,15 +14,24 @@ require File.expand_path(File.dirname(__FILE__) + '/edgecase')
 
 class Proxy
   
-  attr_reader :object
+  attr_reader :messages
   
   def initialize(target_object)
-    @object = target_object
-    return @object
+    @object   = target_object
+    @messages = []
   end
 
-  def some_method_called_by_proxy_should_call_method_on_object
-    @object.some_method_called_by_proxy_should_call_method_on_object
+  def method_missing(method_name, *args, &block)
+    @messages.push(method_name)
+    @object.send(method_name, *args)
+  end
+  
+  def called?(method_name)
+    return true unless @messages.index(method_name) == nil
+  end
+  
+  def number_of_times_called(method_name)
+    return @messages.count(method_name)
   end
 end
 
@@ -72,7 +81,7 @@ class AboutProxyObjectProject < EdgeCase::Koan
     tv.power
 
     assert tv.called?(:power)
-    assert ! tv.called?(:channel)
+    assert !tv.called?(:channel)
   end
 
   def test_proxy_counts_method_calls
